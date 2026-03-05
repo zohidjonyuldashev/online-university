@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/online_university
+    username: postgres
+    password: 1234
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 25
+    username: 6c23cf4c489ef4
+    password: d98c5d4ee02bf4
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+jwt:
+  secret: 4dH6oFGU0WPQRgptUVhl2tgduUZnNMWemJWdWpvVDRQ
+  expiration: 86400000 # 24h
+  refresh-expiration: 604800000 # 7d
+
+file:
+  upload-dir: ./uploads
