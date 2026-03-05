@@ -13,6 +13,4 @@ public interface OtpVerificationRepository extends JpaRepository<OtpVerification
     Optional<OtpVerification> findTopByUserIdAndTypeAndVerifiedFalseOrderByCreatedAtDesc(
             Long userId, OtpType type
     );
-
-    int countByUserIdAndTypeAndVerifiedFalse(Long userId, OtpType type);
 }
