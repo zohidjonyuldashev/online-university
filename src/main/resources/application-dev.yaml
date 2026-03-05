@@ -24,10 +24,11 @@ spring:
           starttls:
             enable: true
 
-jwt:
-  secret: 4dH6oFGU0WPQRgptUVhl2tgduUZnNMWemJWdWpvVDRQ
-  expiration: 86400000 # 24h
-  refresh-expiration: 604800000 # 7d
+app:
+  jwt:
+    secret: 4dH6oFGU0WPQRgptUVhl2tgduUZnNMWemJWdWpvVDRQ
+    access-token-expiration: 3600000 # 1h
+    refresh-token-expiration: 604800000 # 7d
 
 file:
   upload-dir: ./uploads
