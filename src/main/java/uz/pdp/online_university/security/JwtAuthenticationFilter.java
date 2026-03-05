@@ -16,7 +16,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import uz.pdp.online_university.entity.User;
 import uz.pdp.online_university.exception.ErrorResponse;
+import uz.pdp.online_university.repository.UserRepository;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -27,7 +29,7 @@ import java.time.LocalDateTime;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final CustomUserDetailsService userDetailsService;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -42,7 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (token != null && jwtTokenProvider.validateToken(token)) {
 
-                // Prevent refresh tokens from being used as access tokens
                 if (jwtTokenProvider.isRefreshToken(token)) {
                     writeErrorResponse(response, HttpStatus.UNAUTHORIZED,
                             "Refresh token cannot be used for API access");
@@ -50,9 +51,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 String userId = jwtTokenProvider.getUserIdFromToken(token);
-                UserDetails userDetails = userDetailsService.loadUserById(userId);
+                Long tokenVersion = jwtTokenProvider.getTokenVersion(token);
 
-                // Check if account is still valid
+                User user = userRepository.findById(Long.parseLong(userId)).orElse(null);
+                if (user == null || !tokenVersion.equals(user.getTokenVersion())) {
+                    writeErrorResponse(response, HttpStatus.UNAUTHORIZED,
+                            "Token has been invalidated. Please login again.");
+                    return;
+                }
+
+                UserDetails userDetails = new CustomUserDetails(user);
+
                 if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
                     writeErrorResponse(response, HttpStatus.FORBIDDEN,
                             "Account is disabled or locked");
@@ -61,11 +70,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
+                                userDetails, null, userDetails.getAuthorities()
                         );
-
                 authentication.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );

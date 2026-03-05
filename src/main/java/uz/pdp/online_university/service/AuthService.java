@@ -4,17 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import uz.pdp.online_university.dto.request.LoginRequest;
-import uz.pdp.online_university.dto.request.RefreshTokenRequest;
-import uz.pdp.online_university.dto.request.RegisterRequest;
+import uz.pdp.online_university.dto.request.*;
 import uz.pdp.online_university.dto.response.AuthResponse;
+import uz.pdp.online_university.dto.response.MessageResponse;
 import uz.pdp.online_university.dto.response.UserResponse;
 import uz.pdp.online_university.entity.Role;
 import uz.pdp.online_university.entity.User;
+import uz.pdp.online_university.enums.OtpType;
 import uz.pdp.online_university.enums.RoleName;
 import uz.pdp.online_university.exception.AuthenticationFailedException;
 import uz.pdp.online_university.exception.DuplicateResourceException;
@@ -38,14 +37,16 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final OtpService otpService;
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public MessageResponse register(RegisterRequest request) {
+
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new InvalidOperationException("Passwords do not match");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(request.getEmail().toLowerCase().trim())) {
             throw new DuplicateResourceException("User", "email", request.getEmail());
         }
 
@@ -63,38 +64,92 @@ public class AuthService {
                 .email(request.getEmail().toLowerCase().trim())
                 .phone(request.getPhone())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .emailVerified(false)
                 .roles(Set.of(applicantRole))
                 .build();
 
         user = userRepository.save(user);
 
-        log.info("New applicant registered: {} ({})", user.getEmail(), user.getId());
+        otpService.generateAndSend(user, OtpType.EMAIL_VERIFICATION);
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+        log.info("New applicant registered: {} ({}). Verification email sent.",
+                user.getEmail(), user.getId());
 
-        return buildAuthResponse(authentication, user);
+        return MessageResponse.builder()
+                .message("Registration successful. A verification code has been sent to " + user.getEmail())
+                .build();
     }
 
+    public MessageResponse verifyEmail(VerifyEmailRequest request) {
+
+        User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+
+        if (user.isEmailVerified()) {
+            throw new InvalidOperationException("Email is already verified");
+        }
+
+        String error = otpService.verifyAndReturnError(user, request.getCode(), OtpType.EMAIL_VERIFICATION);
+        if (error != null) {
+            throw new InvalidOperationException(error);
+        }
+
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        log.info("Email verified for user: {} ({})", user.getEmail(), user.getId());
+
+        return MessageResponse.builder()
+                .message("Email verified successfully. You can now login.")
+                .build();
+    }
+
+    @Transactional
+    public MessageResponse resendOtp(ResendOtpRequest request) {
+
+        User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+
+        if (user.isEmailVerified()) {
+            throw new InvalidOperationException("Email is already verified");
+        }
+
+        otpService.generateAndSend(user, OtpType.EMAIL_VERIFICATION);
+
+        return MessageResponse.builder()
+                .message("A new verification code has been sent to " + user.getEmail())
+                .build();
+    }
+
+    @Transactional
     public AuthResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
+        User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
+                .orElseThrow(() -> new AuthenticationFailedException("Invalid email or password"));
+
+        if (!user.isEmailVerified()) {
+            throw new InvalidOperationException(
+                    "Email not verified. Please check your inbox or request a new verification code."
+            );
+        }
+
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail().toLowerCase().trim(),
                         request.getPassword()
                 )
         );
 
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        User user = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userDetails.getId()));
+        user.incrementTokenVersion();
+        user = userRepository.save(user);
+
+        CustomUserDetails userDetails = new CustomUserDetails(user);
 
         log.info("User logged in: {} ({})", user.getEmail(), user.getId());
 
-        return buildAuthResponse(authentication, user);
+        return buildAuthResponse(userDetails, user);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponse refresh(RefreshTokenRequest request) {
 
         String refreshToken = request.getRefreshToken();
@@ -108,8 +163,16 @@ public class AuthService {
         }
 
         String userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        Long tokenVersion = jwtTokenProvider.getTokenVersion(refreshToken);
+
         User user = userRepository.findById(Long.parseLong(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        if (!tokenVersion.equals(user.getTokenVersion())) {
+            throw new AuthenticationFailedException(
+                    "Refresh token has been invalidated. Please login again."
+            );
+        }
 
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
@@ -120,19 +183,17 @@ public class AuthService {
             throw new AuthenticationFailedException("Account is locked");
         }
 
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                );
+        user.incrementTokenVersion();
+        user = userRepository.save(user);
 
         log.info("Token refreshed for user: {} ({})", user.getEmail(), user.getId());
 
-        return buildAuthResponse(authentication, user);
+        return buildAuthResponse(new CustomUserDetails(user), user);
     }
 
-    private AuthResponse buildAuthResponse(Authentication authentication, User user) {
-        String accessToken = jwtTokenProvider.generateAccessToken(authentication);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
+    private AuthResponse buildAuthResponse(CustomUserDetails userDetails, User user) {
+        String accessToken = jwtTokenProvider.generateAccessToken(userDetails, user.getTokenVersion());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getTokenVersion());
 
         Set<String> roleNames = user.getRoles().stream()
                 .map(role -> role.getName().name())

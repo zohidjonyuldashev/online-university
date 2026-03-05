@@ -5,7 +5,6 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
@@ -27,9 +26,7 @@ public class JwtTokenProvider {
         );
     }
 
-    public String generateAccessToken(Authentication authentication) {
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
+    public String generateAccessToken(CustomUserDetails userDetails, long tokenVersion) {
         List<String> authorities = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
@@ -38,16 +35,18 @@ public class JwtTokenProvider {
                 .subject(userDetails.getId().toString())
                 .claim("email", userDetails.getEmail())
                 .claim("authorities", authorities)
+                .claim("tokenVersion", tokenVersion)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtConfig.getAccessTokenExpiration()))
                 .signWith(signingKey)
                 .compact();
     }
 
-    public String generateRefreshToken(Long userId) {
+    public String generateRefreshToken(Long userId, long tokenVersion) {
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("type", "refresh")
+                .claim("tokenVersion", tokenVersion)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtConfig.getRefreshTokenExpiration()))
                 .signWith(signingKey)
@@ -56,6 +55,10 @@ public class JwtTokenProvider {
 
     public String getUserIdFromToken(String token) {
         return parseToken(token).getPayload().getSubject();
+    }
+
+    public Long getTokenVersion(String token) {
+        return parseToken(token).getPayload().get("tokenVersion", Long.class);
     }
 
     public boolean validateToken(String token) {
