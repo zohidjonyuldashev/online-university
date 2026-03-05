@@ -1,9 +1,8 @@
 spring:
   application:
     name: online-university
-
-profiles:
-  active: dev
+  profiles:
+    active: dev
 
 server:
   port: 8080

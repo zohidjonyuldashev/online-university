@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -45,7 +44,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String generateRefreshToken(UUID userId) {
+    public String generateRefreshToken(Long userId) {
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("type", "refresh")
