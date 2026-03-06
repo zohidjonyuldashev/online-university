@@ -7,12 +7,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uz.pdp.online_university.annotation.Auditable;
 import uz.pdp.online_university.dto.request.*;
 import uz.pdp.online_university.dto.response.AuthResponse;
 import uz.pdp.online_university.dto.response.MessageResponse;
 import uz.pdp.online_university.dto.response.UserResponse;
 import uz.pdp.online_university.entity.Role;
 import uz.pdp.online_university.entity.User;
+import uz.pdp.online_university.enums.AuditAction;
 import uz.pdp.online_university.enums.OtpType;
 import uz.pdp.online_university.enums.RoleName;
 import uz.pdp.online_university.exception.AuthenticationFailedException;
@@ -40,6 +42,7 @@ public class AuthService {
     private final OtpService otpService;
 
     @Transactional
+    @Auditable(entityType = "User", action = AuditAction.CREATE, entityIdExpression = "#result")
     public MessageResponse register(RegisterRequest request) {
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
@@ -122,22 +125,20 @@ public class AuthService {
     }
 
     @Transactional
+    @Auditable(entityType = "User", action = AuditAction.LOGIN, entityIdExpression = "#result")
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
                 .orElseThrow(() -> new AuthenticationFailedException("Invalid email or password"));
 
         if (!user.isEmailVerified()) {
             throw new InvalidOperationException(
-                    "Email not verified. Please check your inbox or request a new verification code."
-            );
+                    "Email not verified. Please check your inbox or request a new verification code.");
         }
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail().toLowerCase().trim(),
-                        request.getPassword()
-                )
-        );
+                        request.getPassword()));
 
         user.incrementTokenVersion();
         user = userRepository.save(user);
@@ -170,8 +171,7 @@ public class AuthService {
 
         if (!tokenVersion.equals(user.getTokenVersion())) {
             throw new AuthenticationFailedException(
-                    "Refresh token has been invalidated. Please login again."
-            );
+                    "Refresh token has been invalidated. Please login again.");
         }
 
         CustomUserDetails userDetails = new CustomUserDetails(user);
