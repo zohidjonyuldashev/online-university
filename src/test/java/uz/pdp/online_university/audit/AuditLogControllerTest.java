@@ -27,8 +27,11 @@ import uz.pdp.online_university.entity.AuditLog;
 import uz.pdp.online_university.enums.AuditAction;
 import uz.pdp.online_university.enums.AuditSource;
 import uz.pdp.online_university.repository.AuditLogRepository;
+import uz.pdp.online_university.repository.NotificationRepository;
+import uz.pdp.online_university.repository.NotificationTemplateRepository;
 import uz.pdp.online_university.repository.OtpVerificationRepository;
 import uz.pdp.online_university.repository.PermissionRepository;
+import uz.pdp.online_university.repository.PolicyVersionRepository;
 import uz.pdp.online_university.repository.RoleRepository;
 import uz.pdp.online_university.repository.UserRepository;
 import uz.pdp.online_university.service.EmailService;
@@ -88,6 +91,12 @@ class AuditLogControllerTest {
         private PermissionRepository permissionRepository;
         @MockitoBean
         private OtpVerificationRepository otpVerificationRepository;
+        @MockitoBean
+        private PolicyVersionRepository policyVersionRepository;
+        @MockitoBean
+        private NotificationRepository notificationRepository;
+        @MockitoBean
+        private NotificationTemplateRepository notificationTemplateRepository;
         @MockitoBean
         private JavaMailSender javaMailSender;
         @MockitoBean
