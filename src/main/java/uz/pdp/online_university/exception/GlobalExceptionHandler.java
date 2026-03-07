@@ -1,8 +1,11 @@
 package uz.pdp.online_university.exception;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -12,16 +15,17 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    // ---- Custom business exceptions ----
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
@@ -173,6 +177,74 @@ public class GlobalExceptionHandler {
                 .path(extractPath(request))
                 .timestamp(LocalDateTime.now())
                 .validationErrors(validationErrors)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    // ---- Enum deserialization errors (JSON body) ----
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex, WebRequest request) {
+
+        String message = "Malformed request body";
+
+        if (ex.getCause() instanceof InvalidFormatException invalidFormat
+                && invalidFormat.getTargetType() != null
+                && invalidFormat.getTargetType().isEnum()) {
+
+            String fieldName = invalidFormat.getPath().stream()
+                    .map(JsonMappingException.Reference::getFieldName)
+                    .collect(Collectors.joining("."));
+
+            String invalidValue = String.valueOf(invalidFormat.getValue());
+
+            String allowedValues = Arrays.stream(invalidFormat.getTargetType().getEnumConstants())
+                    .map(Object::toString)
+                    .collect(Collectors.joining(", "));
+
+            message = String.format("Invalid value '%s' for field '%s'. Allowed values: [%s]",
+                    invalidValue, fieldName, allowedValues);
+        }
+
+        ErrorResponse response = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(message)
+                .path(extractPath(request))
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    // ---- Enum conversion errors (query parameters) ----
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, WebRequest request) {
+
+        String message;
+
+        if (ex.getRequiredType() != null && ex.getRequiredType().isEnum()) {
+            String allowedValues = Arrays.stream(ex.getRequiredType().getEnumConstants())
+                    .map(Object::toString)
+                    .collect(Collectors.joining(", "));
+
+            message = String.format("Invalid value '%s' for parameter '%s'. Allowed values: [%s]",
+                    ex.getValue(), ex.getName(), allowedValues);
+        } else {
+            message = String.format("Invalid value '%s' for parameter '%s'",
+                    ex.getValue(), ex.getName());
+        }
+
+        ErrorResponse response = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .message(message)
+                .path(extractPath(request))
+                .timestamp(LocalDateTime.now())
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
