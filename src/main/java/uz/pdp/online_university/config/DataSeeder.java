@@ -7,18 +7,18 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import uz.pdp.online_university.entity.Permission;
 import uz.pdp.online_university.entity.NotificationTemplate;
+import uz.pdp.online_university.entity.Permission;
 import uz.pdp.online_university.entity.Role;
 import uz.pdp.online_university.entity.User;
-import uz.pdp.online_university.enums.PermissionCatalog;
 import uz.pdp.online_university.enums.NotificationChannel;
 import uz.pdp.online_university.enums.NotificationTemplateKey;
+import uz.pdp.online_university.enums.PermissionCatalog;
 import uz.pdp.online_university.enums.RoleName;
-import uz.pdp.online_university.repository.PermissionRepository;
 import uz.pdp.online_university.notification.NotificationTemplateService;
 import uz.pdp.online_university.policy.PolicyService;
 import uz.pdp.online_university.repository.NotificationTemplateRepository;
+import uz.pdp.online_university.repository.PermissionRepository;
 import uz.pdp.online_university.repository.RoleRepository;
 import uz.pdp.online_university.repository.UserRepository;
 
@@ -47,6 +47,9 @@ public class DataSeeder implements CommandLineRunner {
         Map<String, Permission> permissionMap = seedPermissions();
         seedRolesWithPermissions(permissionMap);
         seedAdminUser();
+
+        policyService.seedDefaults();
+        seedNotificationTemplates();
     }
 
     private Map<String, Permission> seedPermissions() {
@@ -86,16 +89,6 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedRolesWithPermissions(Map<String, Permission> permissionMap) {
-        seedRoles();
-        policyService.seedDefaults();
-        seedNotificationTemplates();
-    }
-
-    // -------------------------------------------------------------------------
-    // Roles
-    // -------------------------------------------------------------------------
-
-    private void seedRoles() {
         for (RoleName roleName : RoleName.values()) {
             Role role = roleRepository.findByName(roleName)
                     .orElseGet(() -> {
@@ -126,10 +119,6 @@ public class DataSeeder implements CommandLineRunner {
             }
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Notification templates (IN_APP defaults)
-    // -------------------------------------------------------------------------
 
     private void seedNotificationTemplates() {
         seedTemplate(
@@ -180,10 +169,6 @@ public class DataSeeder implements CommandLineRunner {
             log.info("Seeded notification template: {} / {}", key, NotificationChannel.IN_APP);
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
 
     private void seedAdminUser() {
         String adminEmail = "admin@university.uz";

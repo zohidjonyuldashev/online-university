@@ -38,7 +38,7 @@ public class AuditLogController {
     /**
      * Filtered, paginated audit log query.
      * All filter params are optional.
-
+     * <p>
      * GET
      * /api/admin/audit?from=&to=&actor_id=&entity_type=&entity_id=&page=0&size=20
      */
@@ -59,7 +59,7 @@ public class AuditLogController {
         AuditLogFilterRequest filter = buildFilter(actorId, entityType, entityId, from, to);
         Page<AuditLog> resultPage = auditLogService.search(filter, pageable);
 
-        PagedResponse<AuditLogResponse> response = PagedResponse.from(
+        PagedResponse<AuditLogResponse> response = PagedResponse.of(
                 resultPage.map(AuditLogResponse::from));
 
         return ResponseEntity.ok(response);
@@ -67,7 +67,7 @@ public class AuditLogController {
 
     /**
      * Export audit logs as CSV for the given filter.
-
+     * <p>
      * POST /api/admin/audit/export
      */
     @PostMapping("/export")
@@ -90,7 +90,7 @@ public class AuditLogController {
     // -------------------------------------------------------------------------
 
     private AuditLogFilterRequest buildFilter(Long actorId, String entityType, String entityId,
-            Instant from, Instant to) {
+                                              Instant from, Instant to) {
         AuditLogFilterRequest f = new AuditLogFilterRequest();
         f.setActorId(actorId);
         f.setEntityType(entityType);
