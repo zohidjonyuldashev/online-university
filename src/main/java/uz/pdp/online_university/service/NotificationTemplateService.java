@@ -1,4 +1,4 @@
-package uz.pdp.online_university.notification;
+package uz.pdp.online_university.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

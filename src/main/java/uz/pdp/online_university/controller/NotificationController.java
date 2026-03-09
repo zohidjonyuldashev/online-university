@@ -13,7 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_university.dto.request.NotifyRequest;
 import uz.pdp.online_university.dto.response.NotificationResponse;
-import uz.pdp.online_university.notification.NotificationService;
+import uz.pdp.online_university.service.NotificationService;
 import uz.pdp.online_university.security.CustomUserDetails;
 
 import java.util.Map;

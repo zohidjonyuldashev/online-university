@@ -1,4 +1,4 @@
-package uz.pdp.online_university.policy;
+package uz.pdp.online_university.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +11,7 @@ import uz.pdp.online_university.entity.PolicyVersion;
 import uz.pdp.online_university.enums.AuditAction;
 import uz.pdp.online_university.enums.PolicyKey;
 import uz.pdp.online_university.exception.ResourceNotFoundException;
+import uz.pdp.online_university.policy.PolicyCache;
 import uz.pdp.online_university.repository.PolicyVersionRepository;
 
 import java.util.Arrays;

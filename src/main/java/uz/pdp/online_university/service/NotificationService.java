@@ -1,4 +1,4 @@
-package uz.pdp.online_university.notification;
+package uz.pdp.online_university.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +13,11 @@ import uz.pdp.online_university.entity.Notification;
 import uz.pdp.online_university.entity.NotificationTemplate;
 import uz.pdp.online_university.enums.NotificationChannel;
 import uz.pdp.online_university.enums.NotificationStatus;
+import uz.pdp.online_university.exception.RateLimitExceededException;
 import uz.pdp.online_university.exception.ResourceNotFoundException;
+import uz.pdp.online_university.notification.RateLimiter;
+import uz.pdp.online_university.notification.TemplateRenderer;
 import uz.pdp.online_university.repository.NotificationRepository;
-import uz.pdp.online_university.service.EmailService;
 
 import java.util.Map;
 

@@ -1,4 +1,4 @@
-package uz.pdp.online_university.notification;
+package uz.pdp.online_university.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

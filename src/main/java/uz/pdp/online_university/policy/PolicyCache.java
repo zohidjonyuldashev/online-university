@@ -3,6 +3,7 @@ package uz.pdp.online_university.policy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import uz.pdp.online_university.enums.PolicyKey;
+import uz.pdp.online_university.service.PolicyService;
 
 import java.util.EnumMap;
 import java.util.Map;

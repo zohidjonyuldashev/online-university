@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import uz.pdp.online_university.dto.request.PolicyUpdateRequest;
 import uz.pdp.online_university.dto.response.PolicyVersionResponse;
 import uz.pdp.online_university.enums.PolicyKey;
-import uz.pdp.online_university.policy.PolicyService;
+import uz.pdp.online_university.service.PolicyService;
 import uz.pdp.online_university.security.CustomUserDetails;
 
 import java.util.List;
