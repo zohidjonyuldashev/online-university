@@ -42,7 +42,7 @@ public class TemplateRenderer {
             variables = Map.of();
         }
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         Matcher matcher = PLACEHOLDER.matcher(template);
 
         while (matcher.find()) {
