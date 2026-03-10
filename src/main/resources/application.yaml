@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: online-university
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

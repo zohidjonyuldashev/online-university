@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/online_university
+    username: postgres
+    password: 1234
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 25
+    username: 6c23cf4c489ef4
+    password: d98c5d4ee02bf4
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  jwt:
+    secret: 5546F71EB8D72AAFCDF538F319AEEE91C7AF0D967E124B2F83B2452CD45CBDAE
+    access-token-expiration: 3600000 # 1h
+    refresh-token-expiration: 604800000 # 7d
+  otp:
+    length: 6
+    expiration-minutes: 5
+    resend-cooldown-seconds: 60
+    max-attempts: 5
