@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Getter
 @Builder
@@ -18,8 +17,10 @@ public class ErrorResponse {
 
     private int status;
     private String error;
+    private String errorCode;
     private String message;
+    private String correlationId;
+    private Object details;
     private String path;
     private LocalDateTime timestamp;
-    private Map<String, String> validationErrors;
 }
