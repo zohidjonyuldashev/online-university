@@ -1,15 +1,30 @@
 package uz.pdp.online_university.dto.request;
 
-public record UpdateCourseRequest(
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-        String title,
-        String description,
-        String language,
-        String level,
-        String learningOutcomes,
-        String prerequisites,
-        String gradingPolicy,
-        Long version
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class UpdateCourseRequest {
 
-) {
+    private String title;
+
+    private String description;
+
+    private String language;
+
+    private String level;
+
+    private String learningOutcomes;
+
+    private String prerequisites;
+
+    private String gradingPolicy;
+
+    // Required for optimistic lock validation
+    private Long version;
 }
