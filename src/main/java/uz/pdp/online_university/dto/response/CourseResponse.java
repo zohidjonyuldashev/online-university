@@ -1,25 +1,31 @@
 package uz.pdp.online_university.dto.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import uz.pdp.online_university.enums.CourseStatus;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
-public record CourseResponse(
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CourseResponse {
 
-        UUID id,
-        String title,
-        String description,
-        String language,
-        String level,
-        String learningOutcomes,
-        String prerequisites,
-        String gradingPolicy,
-        UUID ownerTeacherId,
-        UUID programId,
-        CourseStatus status,
-        Long version,
-        LocalDateTime updatedAt
-
-) {
+    private Long id;
+    private String title;
+    private String description;
+    private String language;
+    private String level;
+    private String learningOutcomes;
+    private String prerequisites;
+    private String gradingPolicy;
+    private Long ownerTeacherId;
+    private Long programId;
+    private CourseStatus status;
+    private Long version;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
