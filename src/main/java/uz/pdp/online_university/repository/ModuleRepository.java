@@ -93,4 +93,6 @@ public interface ModuleRepository extends JpaRepository<Module, Long> {
             WHERE m.courseId = :courseId AND m.deletedAt IS NULL
             """)
     long countActiveModulesByCourseId(@Param("courseId") Long courseId);
+    @Query("SELECT COUNT(l) FROM Lecture l WHERE l.moduleId = :moduleId AND l.deletedAt IS NULL")
+    long countNonDeletedByModuleId(@Param("moduleId") Long moduleId);
 }
