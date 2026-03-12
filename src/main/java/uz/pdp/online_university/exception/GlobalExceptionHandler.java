@@ -303,7 +303,41 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
+    // ---- Optimistic lock exceptions ----
 
+    @ExceptionHandler(jakarta.persistence.OptimisticLockException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(
+            jakarta.persistence.OptimisticLockException ex, WebRequest request) {
+
+        log.warn("Optimistic lock conflict: {}", ex.getMessage());
+
+        ErrorResponse response = ErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .error(HttpStatus.CONFLICT.getReasonPhrase())
+                .message("This resource was modified by another user. Please refresh and try again.")
+                .path(extractPath(request))
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleObjectOptimisticLocking(
+            org.springframework.orm.ObjectOptimisticLockingFailureException ex, WebRequest request) {
+
+        log.warn("Optimistic lock conflict: {}", ex.getMessage());
+
+        ErrorResponse response = ErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .error(HttpStatus.CONFLICT.getReasonPhrase())
+                .message("This resource was modified by another user. Please refresh and try again.")
+                .path(extractPath(request))
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
     private ErrorResponse baseError(HttpStatus status,
                                     String errorCode,
                                     String message,
