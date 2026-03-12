@@ -2,67 +2,55 @@ package uz.pdp.online_university.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import uz.pdp.online_university.entity.base.BaseEntity;
 import uz.pdp.online_university.enums.CourseStatus;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 @Entity
-@Table(name = "courses")
+@Table(name = "courses", indexes = {
+        @Index(name = "idx_course_owner", columnList = "owner_teacher_id"),
+        @Index(name = "idx_course_status", columnList = "status"),
+        @Index(name = "idx_course_program", columnList = "program_id")
+})
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Course {
+@Builder
+public class Course extends BaseEntity {
 
-    @Id
-    @GeneratedValue
-    private UUID id;
-
-    @Column(nullable = false)
+    @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "language", nullable = false, length = 50)
     private String language;
 
+    @Column(name = "level", length = 50)
     private String level;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "learning_outcomes", columnDefinition = "TEXT")
     private String learningOutcomes;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "prerequisites", columnDefinition = "TEXT")
     private String prerequisites;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "grading_policy", columnDefinition = "TEXT")
     private String gradingPolicy;
 
-    @Column(nullable = false)
-    private UUID ownerTeacherId;
+    @Column(name = "owner_teacher_id", nullable = false)
+    private Long ownerTeacherId;
 
-    private UUID programId;
+    @Column(name = "program_id")
+    private Long programId;
 
     @Enumerated(EnumType.STRING)
-    private CourseStatus status;
+    @Column(name = "status", nullable = false, length = 30)
+    @Builder.Default
+    private CourseStatus status = CourseStatus.DRAFT;
 
     @Version
+    @Column(name = "version")
     private Long version;
-
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        this.updatedAt = LocalDateTime.now();
-        if (status == null) {
-            status = CourseStatus.DRAFT;
-        }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }
