@@ -166,6 +166,13 @@ public class ModuleServiceImpl implements ModuleService {
                 module.getTitle(), module.getId(), courseId, currentUser.getEmail());
     }
 
+    // In ModuleServiceImpl.delete():
+long lectureCount = lectureRepository.countByModuleId(moduleId);
+if (lectureCount > 0) {
+    throw new InvalidOperationException(
+        "Cannot delete module with " + lectureCount + " lecture(s). Delete lectures first.");
+}
+
     // ---- Reorder ----
 
     @Override
