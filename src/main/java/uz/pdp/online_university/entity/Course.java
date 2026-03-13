@@ -2,7 +2,7 @@ package uz.pdp.online_university.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import uz.pdp.online_university.entity.base.BaseEntity;
+import uz.pdp.online_university.entity.BaseEntity;
 import uz.pdp.online_university.enums.CourseStatus;
 
 @Entity
